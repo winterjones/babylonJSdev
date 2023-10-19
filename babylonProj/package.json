@@ -1,0 +1,17 @@
+{
+  "name": "testproj",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lighting01build": "tsc && vite build lighting01",
+    "lighting01preview": "vite preview lighting01"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.2",
+    "vite": "^4.4.0"
+  }
+}
