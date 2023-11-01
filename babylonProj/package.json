@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lighting01build": "tsc && vite build lighting01",
-    "lighting01preview": "vite preview lighting01"
+    "lighting01build": "tsc && vite build element01",
+    "lighting01preview": "vite preview element01"
   },
   "devDependencies": {
     "typescript": "^5.0.2",

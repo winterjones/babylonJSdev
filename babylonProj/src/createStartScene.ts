@@ -1,5 +1,5 @@
-// import "@babylonjs/core/Debug/debugLayer";
-// import "@babylonjs/inspector";
+import "@babylonjs/core/Debug/debugLayer";
+import "@babylonjs/inspector";
 import {
     Scene,
     ArcRotateCamera,
@@ -73,7 +73,7 @@ import {
     }
   
     let that: SceneData = { scene: new Scene(engine) };
-    // that.scene.debugLayer.show();
+    that.scene.debugLayer.show();
   
     that.box = createBox(that.scene);
     that.light = createLight(that.scene);
