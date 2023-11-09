@@ -160,8 +160,7 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
     that.trees = createTrees(that.scene);
     that.skybox = createSkybox(that.scene);
 
-    that.house = createHouse(that.scene,createBox(this.scene),createRoof(this.scene)); 
-    that.house.position = new Vector3(0,5,0);
+
     that.light = createLight(that.scene);
   
     that.camera = createArcRotateCamera(that.scene);

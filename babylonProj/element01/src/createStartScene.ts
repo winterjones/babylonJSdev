@@ -138,8 +138,7 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
       ground?: Mesh;
       wall?: Mesh;
       camera?: Camera;
-      spotlight?: SpotLight;
-     
+      spotlight?: SpotLight;     
     }
   
     let that: SceneData = { scene: new Scene(engine) };
