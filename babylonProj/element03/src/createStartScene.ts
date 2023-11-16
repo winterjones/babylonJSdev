@@ -19,21 +19,30 @@ import {
     ExecuteCodeAction,
     AnimationPropertiesOverride,
     FollowCamera,
-    AbstractMesh,
+    PhysicsAggregate,
+    PhysicsShapeType,
   } from "@babylonjs/core";
-import { colorCorrectionPixelShader } from "@babylonjs/core/Shaders/colorCorrection.fragment";
-import { Color3LineComponent } from "@babylonjs/inspector/lines/color3LineComponent";
-import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/sceneUboDeclaration";
+  //------ havok initialisation ------
+  import HavokPhysics from "@babylonjs/havok"; 
+  import { HavokPlugin } from "@babylonjs/core"; 
 
-  
+  let initializedHavok; 
+  HavokPhysics().then((havok) => { 
+   initializedHavok = havok; 
+  });
+  const havokInstance = await HavokPhysics();
+  const havokPlugin = new HavokPlugin(true, havokInstance);
+   
+  globalThis.HK = await HavokPhysics();
+  //------ end hk ------
+
   // ----- MIDDLE [Functions] ------
   let keyDownMap: any[] = []
   
 
-  function importPlayerMesh(scene, x: number, y: number, camera: FollowCamera) {
+  function importPlayerMesh(scene: Scene, collider: Mesh, x: number, y: number, camera: FollowCamera) {
     let tempItem = { flag: false } 
-    let item = SceneLoader.ImportMesh("", "./models/", "dummy3.babylon", scene, 
-   function(newMeshes, particleSystems, skeletons) {
+    let item: any = SceneLoader.ImportMesh("", "./models/", "dummy3.babylon", scene, function(newMeshes, particleSystems, skeletons) {
     let mesh = newMeshes[0];
     camera.lockedTarget = mesh;
     let skeleton = skeletons[0];
@@ -48,9 +57,9 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
     //let idleRange: any = skeleton.getAnimationRange("YBot_Idle")
 
     let animating: boolean = false;
-    let modifier: number = 1;
     scene.onBeforeRenderObservable.add(()=> { 
       let keydown: boolean = false;
+      
       if(keyDownMap["w"] || keyDownMap["ArrowUp"]){
         mesh.position.z += 0.1; 
         mesh.rotation.y = 0; 
@@ -81,9 +90,19 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
         animating = false; 
         scene.stopAnimation(skeleton);
        }
+       //collision check
+       if (mesh.intersectsMesh(collider)) {
+
+       } 
       }      
+
+      
       );    
+      item = mesh; 
+      let playerAggregate = new PhysicsAggregate(item, PhysicsShapeType.CAPSULE, { mass: 0}, scene);
+      playerAggregate.body.disablePreStep = false;
     });
+
     return item; 
   }
 
@@ -123,22 +142,21 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
     return skybox;
   }  
 
-function createBox(scene: Scene) {
-    const box = MeshBuilder.CreateBox("box", {});
-    box.position.x = 2;
-    return box;
-} 
+  function createBox(scene: Scene, position: Vector3){
+    let box: Mesh = MeshBuilder.CreateBox("box", {size: 1}, scene);
+    box.position = position;
+    const boxAggregate = new PhysicsAggregate(box, PhysicsShapeType.BOX, { mass: 1 }, scene);
+    return box; 
+   } 
+
   function createLight(scene: Scene) {
     const light = new HemisphericLight("hemiLight",new Vector3(-1,-2,-1),scene);
     light.intensity = 1;
     return light;
   }
   function createGround(scene: Scene, position: Vector3, rotation: Vector3) {
-    let ground = MeshBuilder.CreateGround(
-      "ground",
-      { width: 10, height: 10, subdivisions: 4 },
-      scene,
-    );
+    let ground = MeshBuilder.CreateGround("ground", { width: 10, height: 10, subdivisions: 4 },scene,);
+    const groundAggregate = new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, scene);
 
     let groundMaterial = new StandardMaterial("ground", scene);
 	  groundMaterial.specularColor = new Color3(0, 0, 0);
@@ -149,6 +167,7 @@ function createBox(scene: Scene) {
     ground.receiveShadows = true;
     return ground;
   }
+  
   function createArcRotateCamera(scene: Scene) {
     let camAlpha = -Math.PI / 2,
       camBeta = Math.PI / 2.5,
@@ -170,10 +189,10 @@ function createBox(scene: Scene) {
   {
     let camera = new FollowCamera("FollowCam", new Vector3(0,5,-5), scene);
 
-    camera.radius = 10;
+    camera.radius = 8;
     camera.heightOffset = 5;
-    camera.rotationOffset = 90;
-    camera.cameraAcceleration = 0;
+    camera.rotationOffset = -180;
+    camera.cameraAcceleration = 0.5;
     camera.maxCameraSpeed = 1;
     camera.attachControl(true);
 
@@ -190,6 +209,7 @@ function createBox(scene: Scene) {
       camera?: FollowCamera;   
       //
       skybox?: Mesh;
+      box?: Mesh;
       ground?: Mesh;
       importMesh?: any; 
       player?: any;
@@ -197,14 +217,18 @@ function createBox(scene: Scene) {
     } 
     let that: SceneData = { scene: new Scene(engine) };
     //that.scene.debugLayer.show();
+    that.scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin);
     
-    that.ground = createGround(that.scene,new Vector3(0,0,0),new Vector3(0,0,0));
+
     that.actionManager = actionManager(that.scene);
     that.skybox = createSkybox(that.scene);
-
     that.light = createLight(that.scene);  
+    that.ground = createGround(that.scene,new Vector3(0,0,0),new Vector3(0,0,0));
+    that.box = createBox(that.scene, new Vector3(2,2,2));
     that.camera = createFollowCamera(that.scene);
-    that.importMesh = importPlayerMesh(that.scene, 0, 0,that.camera);
     //that.camera = createArcRotateCamera(that.scene);
+    that.importMesh = importPlayerMesh(that.scene,that.box, 0, 0,that.camera);
+
     return that;
+    //------
   }

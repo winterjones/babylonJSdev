@@ -144,7 +144,6 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
     let that: SceneData = { scene: new Scene(engine) };
     that.scene.debugLayer.show();
 
-    // note: create planet
     that.light = createLight(that.scene);        
     that.sphere = createSphere(that.scene,new Vector3(0,5,0),new Vector3(5,5,5), new Color3(0,0.2,1));
     that.torus = createTorus(that.scene,new Vector3(0,5,0),7,0.3,new Color3(1,1,0.5),new Vector3(1,1,1), new Vector3(45,0,0),32);
