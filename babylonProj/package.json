@@ -7,8 +7,16 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lighting01build": "tsc && vite build element01",
-    "lighting01preview": "vite preview element01"
+    "element01build": "tsc && vite build element01",
+    "element01preview": "vite preview element01",
+    "element02build": "tsc && vite build element02",
+    "element02preview": "vite preview element02",
+    "element03build": "tsc && vite build element03",
+    "element03preview": "vite preview element03",
+    "element04build": "tsc && vite build element04",
+    "element04preview": "vite preview element04",
+    "element05build": "tsc && vite build element05",
+    "element05preview": "vite preview element05"
   },
   "devDependencies": {
     "typescript": "^5.0.2",
