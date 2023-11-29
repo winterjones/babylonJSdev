@@ -173,19 +173,6 @@ import {
     camera.attachControl(false);
     return camera;
   }
-  function createFollowCamera(scene: Scene)
-  {
-    let camera = new FollowCamera("FollowCam", new Vector3(0,5,-5), scene);
-
-    camera.radius = 8;
-    camera.heightOffset = 5;
-    camera.rotationOffset = -180;
-    camera.cameraAcceleration = 0.5;
-    camera.maxCameraSpeed = 1;
-    camera.attachControl(true);
-
-    return camera;
-  }
   function createSkybox(scene: Scene){
     const skybox = MeshBuilder.CreateBox("skyBox", {size:150}, scene);
     const skyboxMaterial = new StandardMaterial("skyBox", scene);

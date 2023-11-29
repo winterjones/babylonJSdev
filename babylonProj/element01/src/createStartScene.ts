@@ -33,6 +33,7 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
     light.intensity = 1;
     return light;
   }
+  
   function createBox(scene: Scene, position: Vector3, rotation: Vector3, scaling: Vector3, color: Color3) {
     const newMaterial = new StandardMaterial("newMaterial",scene);         
     let box = MeshBuilder.CreateBox("box",{size: 1}, scene);
@@ -110,8 +111,8 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
   function createArcRotateCamera(scene: Scene) {
     let camAlpha = -Math.PI / 2,
       camBeta = Math.PI / 2.5,
-      camDist = 10,
-      camTarget = new Vector3(0, 0, 0);
+      camDist = 30,
+      camTarget = new Vector3(0, 5, 0);
     let camera = new ArcRotateCamera(
       "camera1",
       camAlpha,
@@ -142,7 +143,7 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
     }
   
     let that: SceneData = { scene: new Scene(engine) };
-    that.scene.debugLayer.show();
+    //that.scene.debugLayer.show();
 
     that.light = createLight(that.scene);        
     that.sphere = createSphere(that.scene,new Vector3(0,5,0),new Vector3(5,5,5), new Color3(0,0.2,1));
