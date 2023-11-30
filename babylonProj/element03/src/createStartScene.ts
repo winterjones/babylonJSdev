@@ -40,72 +40,103 @@ import {
   let keyDownMap: any[] = []
   
 
-  function importPlayerMesh(scene: Scene, collider: Mesh, x: number, y: number, camera: FollowCamera) {
+  function importPlayerMesh(scene: Scene, collider: Mesh, x: number, y: number) {
     let tempItem = { flag: false } 
-    let item: any = SceneLoader.ImportMesh("", "./models/", "dummy3.babylon", scene, function(newMeshes, particleSystems, skeletons) {
-    let mesh = newMeshes[0];
-    camera.lockedTarget = mesh;
-    let skeleton = skeletons[0];
-    skeleton.animationPropertiesOverride = new AnimationPropertiesOverride();
-    skeleton.animationPropertiesOverride.enableBlending = true; 
-    skeleton.animationPropertiesOverride.blendingSpeed = 0.05; 
-    skeleton.animationPropertiesOverride.loopMode = 1; 
-    let walkRange: any = skeleton.getAnimationRange("YBot_Walk");
-    // let runRange: any = skeleton.getAnimationRange("YBot_Run");
-    // let leftRange: any = skeleton.getAnimationRange("YBot_LeftStrafeWalk");
-    // let rightRange: any = skeleton.getAnimationRange("YBot_RightStrafeWalk");
-    //let idleRange: any = skeleton.getAnimationRange("YBot_Idle")
+    let item: any = SceneLoader.ImportMesh("", "public/models/", "dummy3.babylon", scene, function(newMeshes, particleSystems, skeletons, animationGroups) {
+      let mesh = newMeshes[0];
+      let skeleton = skeletons[0];
+      skeleton.animationPropertiesOverride = new AnimationPropertiesOverride();
+      skeleton.animationPropertiesOverride.enableBlending = true;
+      skeleton.animationPropertiesOverride.blendingSpeed = 0.05;
+      skeleton.animationPropertiesOverride.loopMode = 1; 
 
-    let animating: boolean = false;
-    scene.onBeforeRenderObservable.add(()=> { 
-      let keydown: boolean = false;
-      
-      if(keyDownMap["w"] || keyDownMap["ArrowUp"]){
-        mesh.position.z += 0.1; 
-        mesh.rotation.y = 0; 
-        keydown = true;
-      } 
-      if(keyDownMap["a"] || keyDownMap["ArrowLeft"]){
-        mesh.position.x -= 0.1; 
-        mesh.rotation.y = 3 * Math.PI / 2; 
-        keydown = true;
-      } 
-      if(keyDownMap["s"] || keyDownMap["ArrowDown"]){
-        mesh.position.z -= 0.1; 
-        mesh.rotation.y = 2 * Math.PI / 2; 
-        keydown = true;
-      } 
-      if(keyDownMap["d"] || keyDownMap["ArrowRight"]){
-        mesh.position.x += 0.1; 
-        mesh.rotation.y = Math.PI / 2; 
-        keydown = true;
-      } 
-      if (keydown) {
-        camera.lockedTarget = mesh;
-        if (!animating) {
-        animating = true; 
-        scene.beginAnimation(skeleton, walkRange.from, walkRange.to, true);
-        } 
-       } else { 
-        animating = false; 
-        scene.stopAnimation(skeleton);
-       }
-       //collision check
-       if (mesh.intersectsMesh(collider)) {
+      //adapted from: www.babylonjs-playground.com/#LL5BIQ#0
+      //another good playground for this is: www.babylonjs-playground.com/#AHQEIB#17
+      let idleRange: any = skeleton.getAnimationRange("YBot_Idle");
+      let walkRange: any = skeleton.getAnimationRange("YBot_Walk");
+      // let runRange: any = skeleton.getAnimationRange("YBot_Run");
+      //let leftRange: any = skeleton.getAnimationRange("YBot_LeftStrafeWalk");
+      //let rightRange: any = skeleton.getAnimationRange("YBot_RightStrafeWalk");
 
-       } 
-      }      
+      //MOVE THESE IF YOU WANT TO TRIGGER ANYWHERE
+      //let runAnim: any = scene.beginWeightedAnimation(skeleton, runRange.from, runRange.to, 1.0, true);
+      //let leftAnim: any = scene.beginWeightedAnimation(skeleton, leftRange.from, leftRange.to, 1.0, true);
+      //let rightAnim: any = scene.beginWeightedAnimation(skeleton, rightRange.from, rightRange.to, 1.0, true);
 
-      
-      );    
-      item = mesh; 
-      let playerAggregate = new PhysicsAggregate(item, PhysicsShapeType.CAPSULE, { mass: 0}, scene);
+      //Speed and Rotation Variables
+      let speed: number = 0.03;
+      let speedBackward: number = 0.01;
+      let rotationSpeed = 0.05;
+
+      //Animation Variables
+      let idleAnim: any;
+      let walkAnim: any;
+      let animating: boolean = false;
+
+      scene.onBeforeRenderObservable.add(()=> {
+        let keydown: boolean = false;
+        if (keyDownMap["w"] || keyDownMap["ArrowUp"]) {
+          mesh.moveWithCollisions(mesh.forward.scaleInPlace(speed));                
+          //Previous code
+          //mesh.position.z += 0.01;
+          //mesh.rotation.y = 0;
+          keydown = true;
+        }
+        if (keyDownMap["a"] || keyDownMap["ArrowLeft"]) {
+          mesh.rotate(Vector3.Up(), -rotationSpeed);
+          //Previous code
+          //mesh.position.x -= 0.01;
+          //mesh.rotation.y = 3 * Math.PI / 2;
+          keydown = true;
+        }
+        if (keyDownMap["s"] || keyDownMap["ArrowDown"]) {
+          mesh.moveWithCollisions(mesh.forward.scaleInPlace(-speedBackward));
+          //Previous code
+          //mesh.position.z -= 0.01;
+          //mesh.rotation.y = 2 * Math.PI / 2;
+          keydown = true;
+        }
+        if (keyDownMap["d"] || keyDownMap["ArrowRight"]) {
+          mesh.rotate(Vector3.Up(), rotationSpeed);
+          //Previous code
+          //mesh.position.x += 0.01;
+          //mesh.rotation.y = Math.PI / 2;
+          keydown = true;
+        }
+
+        if (keydown) {
+          if (!animating) {
+              animating = true;
+              idleAnim = scene.stopAnimation(skeleton);
+              walkAnim = scene.beginWeightedAnimation(skeleton, walkRange.from, walkRange.to, 1.0, true);
+          }
+          if (animating) {
+            walkAnim = scene.beginWeightedAnimation(skeleton, walkRange.from, walkRange.to, 1.0, true);
+          }
+        } else {
+          if (animating && !keydown) {
+            animating = false;
+            idleAnim = scene.beginWeightedAnimation(skeleton, idleRange.from, idleRange.to, 1.0, true);
+          }
+          if (!animating && !keydown) {
+            idleAnim = scene.beginWeightedAnimation(skeleton, idleRange.from, idleRange.to, 1.0, true);
+          }
+        }
+
+        //collision
+        if (mesh.intersectsMesh(collider)) {
+          console.log("COLLIDED");
+        }
+      });
+
+      //physics collision
+      item = mesh;
+      let playerAggregate = new PhysicsAggregate(item, PhysicsShapeType.CAPSULE, { mass: 0 }, scene);
       playerAggregate.body.disablePreStep = false;
+
     });
-
-    return item; 
+    return item;
   }
-
 
   function actionManager(scene: Scene){
     scene.actionManager = new ActionManager(scene);
@@ -128,12 +159,12 @@ import {
       ) 
     );
     return scene.actionManager; 
-   }
+  }
   function createSkybox(scene: Scene){
     const skybox = MeshBuilder.CreateBox("skyBox", {size:150}, scene);
     const skyboxMaterial = new StandardMaterial("skyBox", scene);
     skyboxMaterial.backFaceCulling = false;
-	  skyboxMaterial.reflectionTexture = new CubeTexture("textures/skybox", scene);
+	  skyboxMaterial.reflectionTexture = new CubeTexture("public/textures/skybox", scene);
 	  skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
 	  skyboxMaterial.diffuseColor = new Color3(0, 0, 0);
 	  skyboxMaterial.specularColor = new Color3(0, 0, 0);
@@ -147,7 +178,7 @@ import {
     box.position = position;
     const boxAggregate = new PhysicsAggregate(box, PhysicsShapeType.BOX, { mass: 1 }, scene);
     return box; 
-   } 
+  } 
 
   function createLight(scene: Scene) {
     const light = new HemisphericLight("hemiLight",new Vector3(-1,-2,-1),scene);
@@ -206,7 +237,7 @@ import {
     interface SceneData {
       scene: Scene;     
       light?: HemisphericLight;
-      camera?: FollowCamera;   
+      camera?: ArcRotateCamera;   
       //
       skybox?: Mesh;
       box?: Mesh;
@@ -225,9 +256,8 @@ import {
     that.light = createLight(that.scene);  
     that.ground = createGround(that.scene,new Vector3(0,0,0),new Vector3(0,0,0));
     that.box = createBox(that.scene, new Vector3(2,2,2));
-    that.camera = createFollowCamera(that.scene);
-    //that.camera = createArcRotateCamera(that.scene);
-    that.importMesh = importPlayerMesh(that.scene,that.box, 0, 0,that.camera);
+    that.camera = createArcRotateCamera(that.scene);
+    that.importMesh = importPlayerMesh(that.scene,that.box, 0, 0);
 
     return that;
     //------

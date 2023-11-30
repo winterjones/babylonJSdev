@@ -104,11 +104,61 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
     roof.material = roofMat;    
     return roof;
   }
-  function createHouse(scene: Scene, box: Mesh, roof: Mesh){
-    const house = Mesh.MergeMeshes([box,roof]);
+  function createHouse(scene: Scene){
+    const box = createBox(scene);
+    const roof = createRoof(scene);
+    const house: any = Mesh.MergeMeshes([box, roof], true, false, undefined, false, true);
+
     return house;
   }
+  function cloneHouse(scene: Scene) {
+    const detached_house = createHouse(scene); //.clone("clonedHouse");
+    detached_house.rotation.y = -6;
+    detached_house.position.x = -3;
+    detached_house.position.z = -2;
+    detached_house.position.y = -6;
 
+    const semi_house = createHouse(scene); //.clone("clonedHouse");
+    semi_house.rotation.y = -6;
+    semi_house.position.x = -3;
+    semi_house.position.z = -2;
+    semi_house.position.y = -6;
+
+    //each entry is an array [house type, rotation, x, z]
+    const places: number[] [] = []; 
+    places.push([1, -Math.PI / 16, 15, 8 ]);
+    places.push([2, -Math.PI / 16, -12, 8 ]);
+    places.push([2, -Math.PI / 16, 18, 13 ]);
+    places.push([2, -Math.PI / 16, 18, 15 ]);
+    places.push([2, 15 * Math.PI / 16, 18, 20 ]);
+    places.push([1, 15 * Math.PI / 16, 18, 8 ]);
+    places.push([2, 15 * Math.PI / 16, 18, 14 ]);
+    places.push([1, 5 * Math.PI / 16, 18, 18 ]);
+    places.push([1, Math.PI + Math.PI / 16, 12, -13 ]);
+    places.push([2, Math.PI + Math.PI / 16, -2, -16 ]);
+    places.push([1, Math.PI + Math.PI / 16, 16, -8 ]);
+    places.push([2, Math.PI / 16, -20, -10 ]);
+    places.push([1, Math.PI / 16, 4.5, -3 ]);
+    places.push([2, Math.PI / 16, 4.75, -5 ]);
+    places.push([1, Math.PI / 16, 4.75, -7 ]);
+    places.push([2, -Math.PI / 16, 5.25, 2 ]);
+    places.push([1, -Math.PI / 16, 0, 0 ]);
+
+    const houses: Mesh[] = [];
+    for (let i = 0; i < places.length; i++) {
+      if (places[i][0] === 1) {
+          houses[i] = detached_house.createInstance("house" + i);
+      }
+      else {
+          houses[i] = semi_house.createInstance("house" + i);
+      }
+        houses[i].rotation.y = places[i][1];
+        houses[i].position.x = places[i][2];
+        houses[i].position.z = places[i][3];
+    }
+
+    return houses;
+  }
 
   function createLight(scene: Scene) {
     const light = new HemisphericLight("hemiLight",new Vector3(-1,-2,-1),scene);
@@ -145,26 +195,23 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
       camera?: Camera;   
       //
       terrain?: Mesh;
-      ground?: Mesh;
       skybox?: Mesh;
       trees?: SpriteManager;
       box?: Mesh;
       roof?: Mesh;
-      house?: Mesh;
+      house?: any;
+      hillHouse?: any;
     } 
     let that: SceneData = { scene: new Scene(engine) };
-    //that.scene.debugLayer.show();
+    that.scene.debugLayer.show();
 
     that.terrain = createTerrain(that.scene);
-    //that.ground = createGround(that.scene);
     that.trees = createTrees(that.scene);
     that.skybox = createSkybox(that.scene);
-
-
-    that.light = createLight(that.scene);
-  
+    that.house = cloneHouse(that.scene);
+    that.hillHouse = createHouse(that.scene);
+    that.light = createLight(that.scene);  
     that.camera = createArcRotateCamera(that.scene);
-
   
     return that;
   }
