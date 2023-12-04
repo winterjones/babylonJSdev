@@ -107,9 +107,10 @@ import {
 
     //----- GUI -----
     let advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("myUI",true);
+    let title = createTextBlock(that.scene, "titleText","Element 05",50,0,"white","0px","30px",advancedTexture);
     let button1 = createSceneButton(that.scene, "but1", "Start Game","0px", "-200px", advancedTexture);
     let button2 = createSceneButton(that.scene, "but2", "Options","0px", "-125px", advancedTexture);
-    let title = createTextBlock(that.scene, "titleText","Element 05",50,0,"white","0px","30px",advancedTexture);
+
 
     //--------------
     return that;

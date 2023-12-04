@@ -40,19 +40,6 @@ import {
     camera.attachControl(false);
     return camera;
   }
-  function createFollowCamera(scene: Scene)
-  {
-    let camera = new FollowCamera("FollowCam", new Vector3(0,5,-5), scene);
-
-    camera.radius = 8;
-    camera.heightOffset = 5;
-    camera.rotationOffset = -180;
-    camera.cameraAcceleration = 0.5;
-    camera.maxCameraSpeed = 1;
-    camera.attachControl(true);
-
-    return camera;
-  }
   function createSkybox(scene: Scene){
     const skybox = MeshBuilder.CreateBox("skyBox", {size:150}, scene);
     const skyboxMaterial = new StandardMaterial("skyBox", scene);
@@ -79,18 +66,30 @@ import {
      button.color = "white"; 
      button.cornerRadius = 20; 
      button.background = "green"; 
-     const buttonClick = new Sound("MenuClickSFX", "./public/audio/menu-click.wav", scene, null, {
+     const buttonClick = new Sound("MenuClickSFX", "./public/audio/sys_buzzer.ogg", scene, null, {
       loop: false, 
       autoplay: false,
     });
 
-     button.onPointerUpObservable.add(function() {
+      button.onPointerUpObservable.add(function() {
       buttonClick.play();
       setSceneIndex(1);
     });
     advtex.addControl(button); 
     return button; 
     } 
+    function createTextBlock(scene: Scene, name: string, text: string, fontSize: number, alignment: number, color: string, x: string, y: string, advtex)
+    {
+      let textBlock = new GUI.TextBlock(name,text);
+      textBlock.fontSize = fontSize;
+      textBlock.textVerticalAlignment = alignment;
+      textBlock.left = x;
+      textBlock.top = y;
+      textBlock.color = color;
+
+      advtex.addControl(textBlock);
+      return textBlock;
+    }
   //------------------------------------------------
 
   //----- BOTTOM [Rendering] ------
@@ -108,9 +107,9 @@ import {
 
     //----- GUI -----
     let advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("myUI",true);
-    let button1 = createSceneButton(that.scene, "but1", "Start Game","0px", "-75px", advancedTexture);
-    let button2 = createSceneButton(that.scene, "but2", "Options","0px", "0px", advancedTexture);
-    
+    let title = createTextBlock(that.scene, "titleText","Element 04",50,0,"green","0px","30px",advancedTexture);
+    let button1 = createSceneButton(that.scene, "but1", "Start Scene","0px", "-300px", advancedTexture);
+
     //--------------
     return that;
     //--------------

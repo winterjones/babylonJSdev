@@ -32,15 +32,6 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
     largeGround.material = largeGroundMat;
     return largeGround;
   }
-  function createGround(scene: Scene){
-    const groundMat = new StandardMaterial("groundMat");
-    groundMat.diffuseTexture = new Texture("https://assets.babylonjs.com/environments/villagegreen.png");
-    groundMat.diffuseTexture.hasAlpha = true;
-    const ground = MeshBuilder.CreateGround("ground", {width:24, height:24});
-    ground.material = groundMat;
-    ground.position.y += 0.1;
-    return ground;
-  }
   function createSkybox(scene: Scene){
     const skybox = MeshBuilder.CreateBox("skyBox", {size:150}, scene);
     const skyboxMaterial = new StandardMaterial("skyBox", scene);
@@ -85,10 +76,6 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
     box.position.z = -2;
     const boxMat = new StandardMaterial("boxMat");
     boxMat.diffuseTexture = new Texture("textures/cubehouse.png");
-
-    
-
-
     box.material = boxMat;
     return box;
   }
@@ -126,23 +113,23 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
 
     //each entry is an array [house type, rotation, x, z]
     const places: number[] [] = []; 
-    places.push([1, -Math.PI / 16, 15, 8 ]);
-    places.push([2, -Math.PI / 16, -12, 8 ]);
+    places.push([1, -Math.PI / 16, 15, 10 ]);
+    places.push([2, -Math.PI / 16, -12, 10 ]);
     places.push([2, -Math.PI / 16, 18, 13 ]);
     places.push([2, -Math.PI / 16, 18, 15 ]);
     places.push([2, 15 * Math.PI / 16, 18, 20 ]);
-    places.push([1, 15 * Math.PI / 16, 18, 8 ]);
+    places.push([1, 15 * Math.PI / 16, 18, 10 ]);
     places.push([2, 15 * Math.PI / 16, 18, 14 ]);
     places.push([1, 5 * Math.PI / 16, 18, 18 ]);
     places.push([1, Math.PI + Math.PI / 16, 12, -13 ]);
-    places.push([2, Math.PI + Math.PI / 16, -2, -16 ]);
-    places.push([1, Math.PI + Math.PI / 16, 16, -8 ]);
+    places.push([2, Math.PI + Math.PI / 16, -20, -16 ]);
+    places.push([1, Math.PI + Math.PI / 16, 16, -10]);
     places.push([2, Math.PI / 16, -20, -10 ]);
-    places.push([1, Math.PI / 16, 4.5, -3 ]);
-    places.push([2, Math.PI / 16, 4.75, -5 ]);
-    places.push([1, Math.PI / 16, 4.75, -7 ]);
-    places.push([2, -Math.PI / 16, 5.25, 2 ]);
-    places.push([1, -Math.PI / 16, 0, 0 ]);
+    places.push([1, Math.PI / 16, -23, -10 ]);
+    places.push([2, Math.PI / 16, 20, -10 ]);
+    places.push([1, Math.PI / 16, 23, -13 ]);
+    places.push([2, -Math.PI / 16, 30, -16 ]);
+    places.push([1, -Math.PI / 16, 26, -10 ]);
 
     const houses: Mesh[] = [];
     for (let i = 0; i < places.length; i++) {
@@ -168,8 +155,8 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
   
   function createArcRotateCamera(scene: Scene) {
     let camAlpha = -Math.PI / 2,
-      camBeta = Math.PI / 2.5,
-      camDist = 30,
+      camBeta = Math.PI / 3.5,
+      camDist = 35,      
       camTarget = new Vector3(0, 0, 0);
     let camera = new ArcRotateCamera(
       "camera1",
@@ -178,8 +165,10 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
       camDist,
       camTarget,
       scene,
-    );
+    );    
     camera.upperBetaLimit = Math.PI / 2.2;
+    camera.upperRadiusLimit = 35;
+    camera.lowerRadiusLimit = 20;
     camera.attachControl(true);
     return camera;
   }
@@ -210,6 +199,8 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
     that.skybox = createSkybox(that.scene);
     that.house = cloneHouse(that.scene);
     that.hillHouse = createHouse(that.scene);
+    that.hillHouse.scaling = new Vector3(2,2,2);
+    that.hillHouse.position = new Vector3(3,-6.5,2);
     that.light = createLight(that.scene);  
     that.camera = createArcRotateCamera(that.scene);
   

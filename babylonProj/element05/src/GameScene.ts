@@ -25,6 +25,7 @@ import {
     Light,
     Sound,
     PhysicsBody,
+    PhysicsMotionType,
   } from "@babylonjs/core";
 
   import * as GUI from "@babylonjs/gui";
@@ -87,10 +88,13 @@ import {
       let cloneTimer: number = 0;
 
       let rampBlueprint = createBlueprintRamp(scene, new Vector3(2,0,0), new Vector3(1,1,1));
-      rampBlueprint.rotation = new Vector3(20,0,60);
+      rampBlueprint.rotation.z = (30/180) * Math.PI
 
       scene.onBeforeRenderObservable.add(()=> {
         let keydown: boolean = false;
+        item.rotationQuaternion.x = 0;
+        item.rotationQuaternion.z = 0;
+
         if(cloneTimer >= 0)
         {
           cloneTimer -= 1;
@@ -129,10 +133,11 @@ import {
           if(cloneTimer <= 0)
           {
             let newClone = cloneRamp(scene, rampBlueprint);
+            rampBlueprint.rotation.z = (30/180) * Math.PI
             cloneTimer = cloneMaxTimer;
           }          
         }
-        rampBlueprint.position = new Vector3(mesh.position.x + 2, mesh.position.y + 1, mesh.position.z);        
+        rampBlueprint.position = new Vector3(mesh.position.x + 2, mesh.position.y + 0.5, mesh.position.z);        
         if (keydown) {
           if (!animating) {
               animating = true;
@@ -165,7 +170,8 @@ import {
 
       //physics collision
       item = mesh;
-      let playerAggregate = new PhysicsAggregate(item, PhysicsShapeType.CAPSULE, { mass: 0 }, scene);
+      const playerAggregate = new PhysicsAggregate(item, PhysicsShapeType.BOX, {  mass: 1 }, scene);
+
       playerAggregate.body.disablePreStep = false;
 
     });
@@ -195,36 +201,36 @@ import {
    }
   function createBlueprintRamp(scene: Scene, position: Vector3, scale: Vector3) 
   {
-    let ramp = MeshBuilder.CreateBox("ramp",{height: 0.1, width: 4},scene);
+    let ramp = MeshBuilder.CreateBox("ramp",{height: 0.1, width: 3, size: 2},scene); 
     let newMaterial = new StandardMaterial("rampMaterial",scene);
     newMaterial.alpha = 0.3;
     ramp.material = newMaterial;
     ramp.position = position;
     ramp.scaling = scale;
+    ramp.rotation.z = (30/180) * Math.PI
     return ramp;
   }
   function cloneRamp(scene: Scene, rampBase: Mesh)
   {
-    let clone = MeshBuilder.CreateBox("clone",{height: 0.1, width: 4},scene);
+    let clone = MeshBuilder.CreateBox("ramp",{height: 0.1, width: 3, size: 2},scene);
     let cloneMaterial = new StandardMaterial("cloneMaterial",scene);
     clone.position = rampBase.position;
     clone.rotation = rampBase.rotation;
     cloneMaterial.ambientColor = new Color3(1,0,0);
     clone.material = cloneMaterial;
-    let cloneAggregate = new PhysicsAggregate(clone, PhysicsShapeType.BOX, { mass: 0 }, scene);
-
+    const cloneAggregate = new PhysicsAggregate(clone, PhysicsShapeType.BOX, { mass: 0 }, scene);
     return clone;
   }
   //----- Level Geometry Functions -----
   function createBox(scene: Scene, position: Vector3){
     let box: Mesh = MeshBuilder.CreateBox("box", { size: 1 }, scene);
     box.position = position;
-    const boxAggregate = new PhysicsAggregate(box, PhysicsShapeType.BOX, { mass: 1 }, scene);
+    //const boxAggregate = new PhysicsAggregate(box, PhysicsShapeType.BOX, { mass: 1 }, scene);
     return box; 
    } 
   
-  function createGround(scene: Scene, position: Vector3, rotation: Vector3) {
-    let ground = MeshBuilder.CreateGround("ground", { width: 20, height: 20, subdivisions: 4 },scene,);
+  function createGround(scene: Scene, position: Vector3, rotation: Vector3, name: string) {
+    let ground = MeshBuilder.CreateGround(name, { width: 10, height: 10, subdivisions: 4 },scene,);
     const groundAggregate = new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, scene);
 
     let groundMaterial = new StandardMaterial("ground", scene);
@@ -338,6 +344,7 @@ import {
       skybox?: Mesh;
       box?: Mesh;
       ground?: Mesh;
+      platform2?: Mesh;
       collectibles?: Mesh[];
       //player related
       importMesh?: any; 
@@ -352,13 +359,12 @@ import {
     that.skybox = createSkybox(that.scene);
     that.light = createLight(that.scene);  
     //----- Level Geometry Setup -----
-    that.ground = createGround(that.scene,new Vector3(0,0,0),new Vector3(0,0,0));
+    that.ground = createGround(that.scene,new Vector3(0,0,0),new Vector3(0,0,0),"ground");
     that.box = createBox(that.scene, new Vector3(2,2,2));    
     that.camera = createArcRotateCamera(that.scene);
     that.importMesh = importPlayerMesh(that.scene, that.box, 0, 0);
-    that.collectibles = spawnCollectibles(that.scene, that.importMesh);
-
-    
+    //that.collectibles = spawnCollectibles(that.scene, that.importMesh);
+    that.platform2 = createGround(that.scene,new Vector3(5,5,5),new Vector3(0,0,0),"platform");
     
 
     //----- GUI Setup -----
