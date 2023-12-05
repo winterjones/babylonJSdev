@@ -26,12 +26,14 @@ import {
     Sound,
     PhysicsBody,
     PhysicsMotionType,
+    AbstractMesh,
+    Quaternion,
   } from "@babylonjs/core";
 
   import * as GUI from "@babylonjs/gui";
 
  //----------- HAVOK INIT -----------
-  import HavokPhysics from "@babylonjs/havok"; 
+  import HavokPhysics, { MotionType } from "@babylonjs/havok"; 
   import { HavokPlugin } from "@babylonjs/core"; 
 
   let initializedHavok; 
@@ -50,46 +52,52 @@ import {
   let itemsCollect: number;
   let keyDownMap: any[] = []
   //------ Player Mesh Functions -----
-  function importPlayerMesh(scene: Scene, collider: Mesh, x: number, y: number) {
+  function importPlayerMesh(scene: Scene, collider: Mesh, x: number, y: number, blueprint: Mesh) {
     let tempItem = { flag: false } 
     let item: any = SceneLoader.ImportMesh("", "./public/models/", "dummy3.babylon", scene, function(newMeshes, particleSystems, skeletons, animationGroups) {
-      let mesh = newMeshes[0];
-      let skeleton = skeletons[0];
-      skeleton.animationPropertiesOverride = new AnimationPropertiesOverride();
-      skeleton.animationPropertiesOverride.enableBlending = true;
-      skeleton.animationPropertiesOverride.blendingSpeed = 0.05;
-      skeleton.animationPropertiesOverride.loopMode = 1; 
+    let mesh = newMeshes[0];
+    let skeleton = skeletons[0];
+    skeleton.animationPropertiesOverride = new AnimationPropertiesOverride();
+    skeleton.animationPropertiesOverride.enableBlending = true;
+    skeleton.animationPropertiesOverride.blendingSpeed = 0.05;
+    skeleton.animationPropertiesOverride.loopMode = 1; 
 
-      //adapted from: www.babylonjs-playground.com/#LL5BIQ#0
-      //another good playground for this is: www.babylonjs-playground.com/#AHQEIB#17
-      let idleRange: any = skeleton.getAnimationRange("YBot_Idle");
-      let walkRange: any = skeleton.getAnimationRange("YBot_Walk");
-      // let runRange: any = skeleton.getAnimationRange("YBot_Run");
-      //let leftRange: any = skeleton.getAnimationRange("YBot_LeftStrafeWalk");
-      //let rightRange: any = skeleton.getAnimationRange("YBot_RightStrafeWalk");
+    //adapted from: www.babylonjs-playground.com/#LL5BIQ#0
+    //another good playground for this is: www.babylonjs-playground.com/#AHQEIB#17
+    let idleRange: any = skeleton.getAnimationRange("YBot_Idle");
+    let walkRange: any = skeleton.getAnimationRange("YBot_Walk");
+    // let runRange: any = skeleton.getAnimationRange("YBot_Run");
+    //let leftRange: any = skeleton.getAnimationRange("YBot_LeftStrafeWalk");
+    //let rightRange: any = skeleton.getAnimationRange("YBot_RightStrafeWalk");
 
-      //MOVE THESE IF YOU WANT TO TRIGGER ANYWHERE
-      //let runAnim: any = scene.beginWeightedAnimation(skeleton, runRange.from, runRange.to, 1.0, true);
-      //let leftAnim: any = scene.beginWeightedAnimation(skeleton, leftRange.from, leftRange.to, 1.0, true);
-      //let rightAnim: any = scene.beginWeightedAnimation(skeleton, rightRange.from, rightRange.to, 1.0, true);
+    //MOVE THESE IF YOU WANT TO TRIGGER ANYWHERE
+    //let runAnim: any = scene.beginWeightedAnimation(skeleton, runRange.from, runRange.to, 1.0, true);
+    //let leftAnim: any = scene.beginWeightedAnimation(skeleton, leftRange.from, leftRange.to, 1.0, true);
+    //let rightAnim: any = scene.beginWeightedAnimation(skeleton, rightRange.from, rightRange.to, 1.0, true);
 
-      //Speed and Rotation Variables
-      let speed: number = 0.04;
-      let speedBackward: number = 0.01;
-      let rotationSpeed = 0.1;
+    //Speed and Rotation Variables
+    let speed: number = 0.04;
+    let speedBackward: number = 0.01;
+    let rotationSpeed = 0.1;
 
-      //Animation Variables
-      let idleAnim: any;
-      let walkAnim: any;
-      let animating: boolean = false;
+    //Animation Variables
+    let idleAnim: any;
+    let walkAnim: any;
+    let animating: boolean = false;
 
-      //clone spawn timer
-      let cloneMaxTimer: number = 120;
-      let cloneTimer: number = 0;
+    //clone spawn timer
+    let cloneMaxTimer: number = 60;
+    let cloneTimer: number = 0;
 
-      let rampBlueprint = createBlueprintRamp(scene, new Vector3(2,0,0), new Vector3(1,1,1));
-      rampBlueprint.rotation.z = (30/180) * Math.PI
-
+    blueprint.rotation.z = (20/180) * Math.PI;
+    blueprint.parent = mesh;
+    //physics collision
+    item = mesh;
+    const playerAggregate = new PhysicsAggregate(item, PhysicsShapeType.CAPSULE, { mass: 1 }, scene);
+     playerAggregate.body.setLinearDamping(10);
+     playerAggregate.body.setAngularDamping(10);
+      
+      playerAggregate.body.disablePreStep = false;
       scene.onBeforeRenderObservable.add(()=> {
         let keydown: boolean = false;
         item.rotationQuaternion.x = 0;
@@ -132,12 +140,17 @@ import {
         {
           if(cloneTimer <= 0)
           {
-            let newClone = cloneRamp(scene, rampBlueprint);
-            rampBlueprint.rotation.z = (30/180) * Math.PI
             cloneTimer = cloneMaxTimer;
+            const worldPos: Vector3 = blueprint.absolutePosition;
+            const newPos: Vector3 = new Vector3(worldPos.x,worldPos.y,worldPos.z);
+
+            const worldRot: Quaternion = blueprint.absoluteRotationQuaternion
+            const newRot: Quaternion = new Quaternion(worldRot.x,worldRot.y,worldRot.z,worldRot.w);
+            let newClone = cloneRamp(scene, newRot, newPos, mesh);
+            blueprint.rotation.z = (15/180) * Math.PI;
+            blueprint.rotation.y = (180/360) * -Math.PI;
           }          
         }
-        rampBlueprint.position = new Vector3(mesh.position.x + 2, mesh.position.y + 0.5, mesh.position.z);        
         if (keydown) {
           if (!animating) {
               animating = true;
@@ -156,6 +169,7 @@ import {
             idleAnim = scene.beginWeightedAnimation(skeleton, idleRange.from, idleRange.to, 1.0, true);
           }
         }
+        //playerAggregate.body.setLinearVelocity(new Vector3(0,0,0));
 
         //collision
         if (mesh.intersectsMesh(collider)) {
@@ -167,13 +181,6 @@ import {
         }
         
       });
-
-      //physics collision
-      item = mesh;
-      const playerAggregate = new PhysicsAggregate(item, PhysicsShapeType.BOX, {  mass: 1 }, scene);
-
-      playerAggregate.body.disablePreStep = false;
-
     });
     return item;
   }
@@ -201,31 +208,37 @@ import {
    }
   function createBlueprintRamp(scene: Scene, position: Vector3, scale: Vector3) 
   {
-    let ramp = MeshBuilder.CreateBox("ramp",{height: 0.1, width: 3, size: 2},scene); 
+    const ramp = MeshBuilder.CreateBox("ramp",{height: 0.1, width: 3, size: 2},scene); 
     let newMaterial = new StandardMaterial("rampMaterial",scene);
     newMaterial.alpha = 0.3;
     ramp.material = newMaterial;
     ramp.position = position;
     ramp.scaling = scale;
-    ramp.rotation.z = (30/180) * Math.PI
+    ramp.rotation.z = (15/180) * Math.PI;
+    ramp.rotation.y = (180/360) * -Math.PI;
+
     return ramp;
   }
-  function cloneRamp(scene: Scene, rampBase: Mesh)
+  function cloneRamp(scene: Scene, rotation: Quaternion, position: Vector3, player: AbstractMesh)
   {
-    let clone = MeshBuilder.CreateBox("ramp",{height: 0.1, width: 3, size: 2},scene);
+    let clone = MeshBuilder.CreateBox("rampClone",{height: 0.1, width: 3, size: 2},scene);
     let cloneMaterial = new StandardMaterial("cloneMaterial",scene);
-    clone.position = rampBase.position;
-    clone.rotation = rampBase.rotation;
+    clone.position = position;
+    clone.rotationQuaternion = rotation;
     cloneMaterial.ambientColor = new Color3(1,0,0);
     clone.material = cloneMaterial;
-    const cloneAggregate = new PhysicsAggregate(clone, PhysicsShapeType.BOX, { mass: 0 }, scene);
+    const cloneAggregate = new PhysicsAggregate(clone, PhysicsShapeType.BOX, { mass: 0, friction: 5 }, scene);
     return clone;
   }
   //----- Level Geometry Functions -----
-  function createBox(scene: Scene, position: Vector3){
+  function createBox(scene: Scene, position: Vector3, scaling: Vector3,rotation: Vector3){
     let box: Mesh = MeshBuilder.CreateBox("box", { size: 1 }, scene);
     box.position = position;
-    //const boxAggregate = new PhysicsAggregate(box, PhysicsShapeType.BOX, { mass: 1 }, scene);
+    box.rotation = rotation;
+    box.scaling = scaling;
+    const boxAggregate = new PhysicsAggregate(box, PhysicsShapeType.BOX, { mass: 100 }, scene);
+    boxAggregate.body.setGravityFactor(0);
+    boxAggregate.body.setMotionType(PhysicsMotionType.STATIC);
     return box; 
    } 
   
@@ -342,14 +355,15 @@ import {
       camera?: ArcRotateCamera;   
       //level geometry
       skybox?: Mesh;
-      box?: Mesh;
-      ground?: Mesh;
+      platform1?: Mesh;
       platform2?: Mesh;
+      ground?: Mesh;
       collectibles?: Mesh[];
       //player related
       importMesh?: any; 
       player?: any;
       actionManager?: any; 
+      rampBlueprint?: Mesh;
     } 
     let that: SceneData = { scene: new Scene(engine) };
     that.scene.debugLayer.show();
@@ -360,12 +374,13 @@ import {
     that.light = createLight(that.scene);  
     //----- Level Geometry Setup -----
     that.ground = createGround(that.scene,new Vector3(0,0,0),new Vector3(0,0,0),"ground");
-    that.box = createBox(that.scene, new Vector3(2,2,2));    
-    that.camera = createArcRotateCamera(that.scene);
-    that.importMesh = importPlayerMesh(that.scene, that.box, 0, 0);
-    //that.collectibles = spawnCollectibles(that.scene, that.importMesh);
-    that.platform2 = createGround(that.scene,new Vector3(5,5,5),new Vector3(0,0,0),"platform");
+    that.platform1 = createBox(that.scene, new Vector3(11,2,0),new Vector3(5,0.5,5), new Vector3(0,0,0));
+    that.platform2 = createBox(that.scene, new Vector3(22,4,0),new Vector3(5,0.5,5), new Vector3(0,0,0));    
     
+    that.camera = createArcRotateCamera(that.scene);
+    that.rampBlueprint = createBlueprintRamp(that.scene, new Vector3(0,0.5,2), new Vector3(1,1,1));
+    that.importMesh = importPlayerMesh(that.scene, that.platform1, 0, 0,that.rampBlueprint);
+    //that.collectibles = spawnCollectibles(that.scene, that.importMesh);   
 
     //----- GUI Setup -----
     let advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("myUI",true);
