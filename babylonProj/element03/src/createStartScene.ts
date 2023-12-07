@@ -21,6 +21,7 @@ import {
     FollowCamera,
     PhysicsAggregate,
     PhysicsShapeType,
+    CreateIcoSphere,
   } from "@babylonjs/core";
   //------ havok initialisation ------
   import HavokPhysics from "@babylonjs/havok"; 
@@ -179,14 +180,25 @@ import {
     const boxAggregate = new PhysicsAggregate(box, PhysicsShapeType.BOX, { mass: 1 }, scene);
     return box; 
   } 
-
+  function createSphere(scene: Scene, position: Vector3){
+    let sphere: Mesh = MeshBuilder.CreateSphere("box", {diameter: 2}, scene);
+    sphere.position = position;
+    const boxAggregate = new PhysicsAggregate(sphere, PhysicsShapeType.SPHERE, { mass: 1 }, scene);
+    return sphere; 
+  } 
+  function createIcoSphere(scene: Scene, position: Vector3){
+    let icoSphere: Mesh = MeshBuilder.CreateIcoSphere("icoSphere",{radiusX: 2, radiusY: 2, radiusZ: 4},scene);
+    icoSphere.position = position;
+    const boxAggregate = new PhysicsAggregate(icoSphere, PhysicsShapeType.SPHERE, { mass: 1 }, scene);
+    return icoSphere; 
+  } 
   function createLight(scene: Scene) {
     const light = new HemisphericLight("hemiLight",new Vector3(-1,-2,-1),scene);
     light.intensity = 1;
     return light;
   }
   function createGround(scene: Scene, position: Vector3, rotation: Vector3) {
-    let ground = MeshBuilder.CreateGround("ground", { width: 10, height: 10, subdivisions: 4 },scene,);
+    let ground = MeshBuilder.CreateGround("ground", { width: 15, height: 15, subdivisions: 4 },scene,);
     const groundAggregate = new PhysicsAggregate(ground, PhysicsShapeType.BOX, { mass: 0 }, scene);
 
     let groundMaterial = new StandardMaterial("ground", scene);
@@ -216,20 +228,6 @@ import {
     camera.attachControl(true);
     return camera;
   }
-  function createFollowCamera(scene: Scene)
-  {
-    let camera = new FollowCamera("FollowCam", new Vector3(0,5,-5), scene);
-
-    camera.radius = 8;
-    camera.heightOffset = 5;
-    camera.rotationOffset = -180;
-    camera.cameraAcceleration = 0.5;
-    camera.maxCameraSpeed = 1;
-    camera.attachControl(true);
-
-    return camera;
-  }
-
   //------------------------------------------------
 
   //----- BOTTOM [Rendering] ------
@@ -241,6 +239,8 @@ import {
       //
       skybox?: Mesh;
       box?: Mesh;
+      sphere?: Mesh;
+      icoSphere?: Mesh;
       ground?: Mesh;
       importMesh?: any; 
       player?: any;
@@ -256,6 +256,8 @@ import {
     that.light = createLight(that.scene);  
     that.ground = createGround(that.scene,new Vector3(0,0,0),new Vector3(0,0,0));
     that.box = createBox(that.scene, new Vector3(2,2,2));
+    that.sphere = createSphere(that.scene,new Vector3(-2,2,-2));
+    that.icoSphere = createIcoSphere(that.scene,new Vector3(-3,2,5));
     that.camera = createArcRotateCamera(that.scene);
     that.importMesh = importPlayerMesh(that.scene,that.box, 0, 0);
 

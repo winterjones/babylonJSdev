@@ -15,7 +15,6 @@ import {
     Color3,
     Texture,
     CubeTexture,
-    FollowCamera,
     Light,
     Sound,
     SceneLoader,
@@ -73,7 +72,7 @@ import {
 
      button.onPointerUpObservable.add(function() {
       buttonClick.play();
-      setSceneIndex(1);
+      setSceneIndex(0);
     });
     advtex.addControl(button); 
     return button; 
@@ -108,9 +107,8 @@ import {
     //----- GUI -----
     let advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("myUI",true);
     let title = createTextBlock(that.scene, "titleText","E5: Ramped Up",50,0,"white","0px","30px",advancedTexture);
-    let button1 = createSceneButton(that.scene, "but1", "Start Game","0px", "-200px", advancedTexture);
-
-
+    let description = createTextBlock(that.scene, "description","E5: Congratulations! You collected all the items.",20,0,"white","0px","-100px",advancedTexture);
+    let button1 = createSceneButton(that.scene, "but1", "Return to Main Menu","0px", "-200px", advancedTexture);
     //--------------
     return that;
     //--------------

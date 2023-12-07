@@ -29,6 +29,7 @@ import {
     Quaternion,
     ShadowGenerator,
     DirectionalLight,
+    Space,
   } from "@babylonjs/core";
 
   import * as GUI from "@babylonjs/gui";
@@ -53,7 +54,7 @@ import {
   let itemsCollect: number;
   let keyDownMap: any[] = []
   //------ Player Mesh Functions -----
-  function importPlayerMesh(scene: Scene, collider: Mesh, x: number, y: number, blueprint: Mesh, cooldownText: GUI.TextBlock) {  
+  function importPlayerMesh(scene: Scene, collider: Mesh, x: number, y: number, blueprint: Mesh, cooldownText: GUI.TextBlock, collectibleText: GUI.TextBlock) {  
     let tempItem = { flag: false } 
     let item: any = SceneLoader.ImportMesh("", "./public/models/", "dummy3.babylon", scene, function(newMeshes, particleSystems, skeletons, animationGroups) {
     let mesh = newMeshes[0];
@@ -77,25 +78,31 @@ import {
     //let rightAnim: any = scene.beginWeightedAnimation(skeleton, rightRange.from, rightRange.to, 1.0, true);
 
     //Speed and Rotation Variables
-    let speed: number = 0.04;
+    let speed: number = 0.03;
     let speedBackward: number = 0.01;
     let rotationSpeed = 0.05;
+    skeleton.animationPropertiesOverride = new AnimationPropertiesOverride();
+    skeleton.animationPropertiesOverride.enableBlending = true;
+    skeleton.animationPropertiesOverride.blendingSpeed = 0.05;
+    skeleton.animationPropertiesOverride.loopMode = 1; 
 
     //Animation Variables
     let idleAnim: any;
     let walkAnim: any;
     let animating: boolean = false;
 
-    //clone spawn timer
+    //clone blueprint setup
     let cloneMaxTimer: number = 90;
     let cloneTimer: number = 0;
-
     blueprint.rotation.z = (20/180) * Math.PI;
     blueprint.parent = mesh;
+    //collectible setup
+    let collectiblesObtained: number = 0;
+    
     //physics collision
     item = mesh;
-    const playerAggregate = new PhysicsAggregate(item, PhysicsShapeType.CAPSULE, { mass: 1 }, scene);
-    playerAggregate.body.setLinearDamping(10);
+    const playerAggregate = new PhysicsAggregate(item, PhysicsShapeType.CAPSULE, { mass: 10 }, scene);
+    playerAggregate.body.setLinearDamping(5);
     playerAggregate.body.setAngularDamping(10);
       
     playerAggregate.body.disablePreStep = false;
@@ -103,7 +110,7 @@ import {
       let keydown: boolean = false;
       item.rotationQuaternion.x = 0;
       item.rotationQuaternion.z = 0;
-
+      //clone timer management
       if(cloneTimer >= 0)
       {
         cooldownText.text = "Clone Ramp Cooldown: " + Math.round(cloneTimer/10);
@@ -113,35 +120,24 @@ import {
       {
         cooldownText.text = "Clone Ramp Cooldown: Finished";
       }
-
+      //key controls
       if (keyDownMap["w"] || keyDownMap["ArrowUp"]) {
         mesh.moveWithCollisions(mesh.forward.scaleInPlace(speed));                
-        //Previous code
-        //mesh.position.z += 0.01;
-        //mesh.rotation.y = 0;
         keydown = true;
         }
       if (keyDownMap["a"] || keyDownMap["ArrowLeft"]) {
         mesh.rotate(Vector3.Up(), -rotationSpeed);
-        //Previous code
-        //mesh.position.x -= 0.01;
-        //mesh.rotation.y = 3 * Math.PI / 2;
         keydown = true;
       }
       if (keyDownMap["s"] || keyDownMap["ArrowDown"]) {
         mesh.moveWithCollisions(mesh.forward.scaleInPlace(-speedBackward));
-        //Previous code
-        //mesh.position.z -= 0.01;
-        //mesh.rotation.y = 2 * Math.PI / 2;
         keydown = true;
       }
       if (keyDownMap["d"] || keyDownMap["ArrowRight"]) {
         mesh.rotate(Vector3.Up(), rotationSpeed);
-        //Previous code
-        //mesh.position.x += 0.01;
-        //mesh.rotation.y = Math.PI / 2;
         keydown = true;
       }
+      //spawn clone control
       if(keyDownMap["q"])
       {
         if(cloneTimer <= 0)
@@ -156,34 +152,38 @@ import {
           blueprint.rotation.y = (180/360) * -Math.PI;
         }          
       }
-      if (keydown) {
-        if (!animating) {
-            animating = true;
-            idleAnim = scene.stopAnimation(skeleton);
-            walkAnim = scene.beginWeightedAnimation(skeleton, walkRange.from, walkRange.to, 1.0, true);
-        }
-        if (animating) {
-          walkAnim = scene.beginWeightedAnimation(skeleton, walkRange.from, walkRange.to, 1.0, true);
-        }
-      } else {
-        if (animating && !keydown) {
-          animating = false;
-          idleAnim = scene.beginWeightedAnimation(skeleton, idleRange.from, idleRange.to, 1.0, true);
-        }
-        if (!animating && !keydown) {
-          idleAnim = scene.beginWeightedAnimation(skeleton, idleRange.from, idleRange.to, 1.0, true);
-        }
-      }
+      //animation
+     let isPlaying: boolean = false;
+        if (keydown && !isPlaying) {
+          if (!animating) {
+              idleAnim = scene.stopAnimation(skeleton);
+              walkAnim = scene.beginWeightedAnimation(skeleton, walkRange.from, walkRange.to, 1.0, true);
+              animating = true;
+          }
+          if (animating) {
+            //walkAnim = scene.beginWeightedAnimation(skeleton, walkRange.from, walkRange.to, 1.0, true);
+            isPlaying = true;
+          }
+        } else {
+          if (animating && !keydown) {
+            walkAnim = scene.stopAnimation(skeleton);
+            idleAnim = scene.beginWeightedAnimation(skeleton, idleRange.from, idleRange.to, 1.0, true);
+            animating = false;
+            isPlaying = false;
+          }
 
-        //collision
+      //collision
       if (mesh.intersectsMesh(collider)) {
-        console.log(collider.name);
-        if(collider.name.includes ("collectible"))
+        console.log("hit collider");
+        collectiblesObtained += 1;
+        changeCollectibleLocation(scene,collider,collectiblesObtained);    
+        collectibleText.text = "Items Collected: " + collectiblesObtained;
+        if(collectiblesObtained == 8)
         {
-          console.log("collided with collectible");
+          setSceneIndex(2);
         }
       }
-        
+    } 
     });
   });
     return item;
@@ -237,15 +237,35 @@ import {
     const cloneAggregate = new PhysicsAggregate(clone, PhysicsShapeType.BOX, { mass: 0, friction: 5 }, scene);
     return clone;
   }
+  function changeCollectibleLocation(scene: Scene, collectible: Mesh, index: number)
+  {
+    const locations: Vector3[] = [];
+    locations.push(new Vector3(3,1,0)); 
+    locations.push(new Vector3(10,2,0));
+    locations.push(new Vector3(21,4.6,0));
+    locations.push(new Vector3(15,8.5,0));
+    locations.push(new Vector3(15,12.5,0));
+    locations.push(new Vector3(10,13.5,0));
+    locations.push(new Vector3(5,14.5,0));
+    locations.push(new Vector3(0,15.5,0));
+    locations.push(new Vector3(-100,-100,-100));
+    collectible.position = locations[index];
+  }
+   //move the collectible outside the map so the player cannot collect it
   //----- Level Geometry Functions -----
-  function createBox(scene: Scene, position: Vector3, scaling: Vector3,rotation: Vector3){
+  function createBox(scene: Scene, position: Vector3, scaling: Vector3, rotation: Vector3){
+    //this function is primarily used to create the platforms to traverse
     let box: Mesh = MeshBuilder.CreateBox("box", { size: 1 }, scene);
+    let boxMaterial = new StandardMaterial("boxMaterial",scene);
+    boxMaterial.alpha = 0.75;
+    boxMaterial.diffuseColor = new Color3(0.38,0.38,0.38);
     box.position = position;
     box.rotation = rotation;
     box.scaling = scaling;
-    const boxAggregate = new PhysicsAggregate(box, PhysicsShapeType.BOX, { mass: 100 }, scene);
+    const boxAggregate = new PhysicsAggregate(box, PhysicsShapeType.BOX, { mass: 1 }, scene);
     boxAggregate.body.setGravityFactor(0);
     boxAggregate.body.setMotionType(PhysicsMotionType.STATIC);
+    box.material = boxMaterial;
     box.receiveShadows = true;
     return box; 
   } 
@@ -265,43 +285,16 @@ import {
   }
   function createCollectible(scene: Scene, scale: Vector3)
   {
-    const collectible = MeshBuilder.CreateSphere("collectible",{},scene);
-    
+    const collectible = MeshBuilder.CreateSphere("collectible",{},scene);   
+    let collectibleMaterial = new StandardMaterial("collectibleMaterial", scene) ;
+    collectibleMaterial.diffuseColor = new Color3(0,0.75,0);
     collectible.scaling = scale;
-    let collectibleAggregate = new PhysicsAggregate(collectible, PhysicsShapeType.BOX, { mass: 1 }, scene);
+    collectible.material = collectibleMaterial;
+    changeCollectibleLocation(scene,collectible,0);    
+
     return collectible;
   }
-  function spawnCollectibles(scene: Scene, player: any) //create and spawn collectible clones, then position them
-  {
-    const collectibles: Mesh[] = []; //array of all collectible objects being made
-    const positions: Vector3[] = []; //array of positions that correspond to the collectibles
-    positions.push(new Vector3(3,1,0)); 
-    positions.push(new Vector3(6,1,0)); //pushing 5 locations for the collectibles to spawn
-    positions.push(new Vector3(9,1,0));
-    positions.push(new Vector3(12,1,0));
-    
-    for(let i = 0; i < positions.length; i++)
-    {
-      collectibles[i] = createCollectible(scene,new Vector3(0.1,0.1,0.1)); //clones a collectible and adds it to the array
-      collectibles[i].name = "collectible" + i;
-      collectibles[i].position = positions[i];
-      
-    }
-
-    scene.onBeforeRenderObservable.add(()=> {
-      //collision
-      for (let i = 0; i < collectibles.length; i++) {
-        if (collectibles[i].intersectsMesh(player)) {
-          console.log(player.name);
-          // if(collider.name.includes ("collectible"))
-          // {
-          //   console.log("collided with collectible");
-          // }
-        }
-      }
-    });
-    return collectibles;
-  }
+ 
   //----- Scene Functions -----
   function createFollowCamera(scene: Scene, player: any)
   {
@@ -320,7 +313,7 @@ import {
     const skybox = MeshBuilder.CreateBox("skyBox", {size:150}, scene);
     const skyboxMaterial = new StandardMaterial("skyBox", scene);
     skyboxMaterial.backFaceCulling = false;
-	  skyboxMaterial.reflectionTexture = new CubeTexture("./public/textures/skybox", scene);
+	  skyboxMaterial.reflectionTexture = new CubeTexture("./public/textures/skybox2", scene);
 	  skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
 	  skyboxMaterial.diffuseColor = new Color3(0, 0, 0);
 	  skyboxMaterial.specularColor = new Color3(0, 0, 0);
@@ -362,8 +355,10 @@ import {
       platform1?: Mesh;
       platform2?: Mesh;
       platform3?: Mesh;
+      platform4?: Mesh;
+      platform5?: Mesh;
       ground?: Mesh;
-      collectibles?: Mesh[];
+      collectible?: Mesh;
       //player related
       importMesh?: any; 
       player?: any;
@@ -371,31 +366,33 @@ import {
       rampBlueprint?: Mesh;
     } 
     let that: SceneData = { scene: new Scene(engine) };
-    //that.scene.debugLayer.show();
     //----- GUI Setup -----
     let advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI("myUI",true);
-    let collectibleText = createTextBlock(that.scene,"collectibleText","Items Collected: 0",30,0,"white",-520,5,advancedTexture);
+    let collectibleText = createTextBlock(that.scene,"collectibleText","Items Collected: 0",25,0,"white",-520,5,advancedTexture);
     let cooldownText = createTextBlock(that.scene,"cooldownText","Clone Ramp Cooldown: Finished",20,0,"white",0,800,advancedTexture);
     //----- Scene Setup -----
     that.scene.enablePhysics(new Vector3(0, -9.8, 0), havokPlugin); 
     that.actionManager = actionManager(that.scene);
     that.skybox = createSkybox(that.scene);
     that.hemiLight = createHemiLight(that.scene);
-
+    const music = new Sound("Music", "./public/audio/510895__deleted_user_11009121__lofi-loop-7.mp3", that.scene, null, {
+      loop: true,
+      autoplay: true,
+      volume: 1,
+    });
     //----- Level Geometry Setup -----
     that.ground = createGround(that.scene,new Vector3(0,0,0),new Vector3(0,0,0),"ground");
-    that.platform1 = createBox(that.scene, new Vector3(10,1,0),new Vector3(5,0.5,5), new Vector3(0,0,0));
-    that.platform2 = createBox(that.scene, new Vector3(21,2.4,0),new Vector3(5,0.5,5), new Vector3(0,0,0));    
-    that.platform3 = createBox(that.scene, new Vector3(17,6,0),new Vector3(5,0.5,5), new Vector3(0,0,0));    
-
+    that.platform1 = createBox(that.scene, new Vector3(10,-9,0),new Vector3(5,20,5), new Vector3(0,0,0));
+    that.platform2 = createBox(that.scene, new Vector3(21,-7.4,0),new Vector3(5,20,5), new Vector3(0,0,0));    
+    that.platform3 = createBox(that.scene, new Vector3(15,7,0),new Vector3(5,0.5,5), new Vector3(0,0,0));    
+    that.platform4 = createBox(that.scene, new Vector3(15,11,0),new Vector3(5,0.5,5), new Vector3(0,0,0));   
+    that.platform5 = createBox(that.scene, new Vector3(0,13,5),new Vector3(5,0.5,10), new Vector3(0,0,0));  
+    that.collectible = createCollectible(that.scene,new Vector3(0.3,0.3,0.3));
     that.rampBlueprint = createBlueprintRamp(that.scene, new Vector3(0,0.5,2.5), new Vector3(1,1,1));
-    that.importMesh = importPlayerMesh(that.scene, that.platform1, 0, 0,that.rampBlueprint,cooldownText);
-    that.camera = createFollowCamera(that.scene,that.rampBlueprint);   
-    that.camera.parent = that.importMesh.mesh;
-    //that.collectibles = spawnCollectibles(that.scene, that.importMesh);   
 
-    
-    
+    that.importMesh = importPlayerMesh(that.scene, that.collectible, 0, 0,that.rampBlueprint,cooldownText, collectibleText);
+    that.camera = createFollowCamera(that.scene,that.rampBlueprint);   
+    that.camera.parent = that.importMesh.mesh;   
     return that;
     //----------- RENDERING END ----------
   }
