@@ -43,7 +43,7 @@ import {
 
   function importPlayerMesh(scene: Scene, collider: Mesh, x: number, y: number) {
     let tempItem = { flag: false } 
-    let item: any = SceneLoader.ImportMesh("", "public/models/", "dummy3.babylon", scene, function(newMeshes, particleSystems, skeletons, animationGroups) {
+    let item: any = SceneLoader.ImportMesh("", "./models/", "dummy3.babylon", scene, function(newMeshes, particleSystems, skeletons, animationGroups) {
       let mesh = newMeshes[0];
       let skeleton = skeletons[0];
       skeleton.animationPropertiesOverride = new AnimationPropertiesOverride();
@@ -165,7 +165,7 @@ import {
     const skybox = MeshBuilder.CreateBox("skyBox", {size:150}, scene);
     const skyboxMaterial = new StandardMaterial("skyBox", scene);
     skyboxMaterial.backFaceCulling = false;
-	  skyboxMaterial.reflectionTexture = new CubeTexture("public/textures/skybox", scene);
+	  skyboxMaterial.reflectionTexture = new CubeTexture("./textures/skybox", scene);
 	  skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
 	  skyboxMaterial.diffuseColor = new Color3(0, 0, 0);
 	  skyboxMaterial.specularColor = new Color3(0, 0, 0);

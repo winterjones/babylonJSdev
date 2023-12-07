@@ -27,8 +27,8 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
   function createTerrain(scene: Scene){
     //Create large ground for valley environment    
     const largeGroundMat = new StandardMaterial("largeGroundMat");
-    largeGroundMat.diffuseTexture = new Texture("assets/valleygrass.png");
-    const largeGround = MeshBuilder.CreateGroundFromHeightMap("largeGround", "assets/villageheightmap.png", {width:150, height:150, subdivisions: 20, minHeight:0, maxHeight: 10});
+    largeGroundMat.diffuseTexture = new Texture("textures/valleygrass.png");
+    const largeGround = MeshBuilder.CreateGroundFromHeightMap("largeGround", "textures/villageheightmap.png", {width:150, height:150, subdivisions: 20, minHeight:0, maxHeight: 10});
     largeGround.material = largeGroundMat;
     return largeGround;
   }
@@ -36,7 +36,7 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
     const skybox = MeshBuilder.CreateBox("skyBox", {size:150}, scene);
     const skyboxMaterial = new StandardMaterial("skyBox", scene);
     skyboxMaterial.backFaceCulling = false;
-	  skyboxMaterial.reflectionTexture = new CubeTexture("assets/skybox", scene);
+	  skyboxMaterial.reflectionTexture = new CubeTexture("textures/skybox", scene);
 	  skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
 	  skyboxMaterial.diffuseColor = new Color3(0, 0, 0);
 	  skyboxMaterial.specularColor = new Color3(0, 0, 0);
@@ -75,7 +75,7 @@ import { sceneUboDeclaration } from "@babylonjs/core/Shaders/ShadersInclude/scen
     box.position.x = -3;
     box.position.z = -2;
     const boxMat = new StandardMaterial("boxMat");
-    boxMat.diffuseTexture = new Texture("assets/cubehouse.png");
+    boxMat.diffuseTexture = new Texture("textures/cubehouse.png");
     box.material = boxMat;
     return box;
   }

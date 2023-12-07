@@ -56,7 +56,7 @@ import {
   //------ Player Mesh Functions -----
   function importPlayerMesh(scene: Scene, collider: Mesh, x: number, y: number, blueprint: Mesh, cooldownText: GUI.TextBlock, collectibleText: GUI.TextBlock) {  
     let tempItem = { flag: false } 
-    let item: any = SceneLoader.ImportMesh("", "./public/models/", "dummy3.babylon", scene, function(newMeshes, particleSystems, skeletons, animationGroups) {
+    let item: any = SceneLoader.ImportMesh("", "models/", "dummy3.babylon", scene, function(newMeshes, particleSystems, skeletons, animationGroups) {
     let mesh = newMeshes[0];
     let skeleton = skeletons[0];
     skeleton.animationPropertiesOverride = new AnimationPropertiesOverride();
@@ -313,7 +313,7 @@ import {
     const skybox = MeshBuilder.CreateBox("skyBox", {size:150}, scene);
     const skyboxMaterial = new StandardMaterial("skyBox", scene);
     skyboxMaterial.backFaceCulling = false;
-	  skyboxMaterial.reflectionTexture = new CubeTexture("./public/textures/skybox2", scene);
+	  skyboxMaterial.reflectionTexture = new CubeTexture("textures/skybox2", scene);
 	  skyboxMaterial.reflectionTexture.coordinatesMode = Texture.SKYBOX_MODE;
 	  skyboxMaterial.diffuseColor = new Color3(0, 0, 0);
 	  skyboxMaterial.specularColor = new Color3(0, 0, 0);
@@ -375,7 +375,7 @@ import {
     that.actionManager = actionManager(that.scene);
     that.skybox = createSkybox(that.scene);
     that.hemiLight = createHemiLight(that.scene);
-    const music = new Sound("Music", "./public/audio/510895__deleted_user_11009121__lofi-loop-7.mp3", that.scene, null, {
+    const music = new Sound("Music", "audio/510895__deleted_user_11009121__lofi-loop-7.mp3", that.scene, null, {
       loop: true,
       autoplay: true,
       volume: 1,
